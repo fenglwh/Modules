@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+#vs
+.vs/*.*
+.git/*.*
+*.opendb
+
+
+*.db
+
+*.ipch
