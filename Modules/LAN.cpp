@@ -1,6 +1,6 @@
 #include "LAN.h"
 
-SockData SockData::parse(byte* data,int length) {
+SockData SockData::load(byte* data,int length) {
 	SockData retVal;
 	int pos = 0;
 	retVal.type = (SOCK_MESSAGE_TYPE)(data[0] * 256 + data[1]);
@@ -18,7 +18,7 @@ SockData SockData::parse(byte* data,int length) {
 	return retVal;
 }
 
-Buffer SockData::load() {
+Buffer SockData::toBuffer() {
 	Buffer retVal;
 	retVal.data[0] = (byte)(0xff & int(this->type));
 	retVal.data[1] = (byte)((0xff00 & int(this->type)) >> 8);
@@ -45,21 +45,46 @@ int SockBase::send(Buffer buf) {
 	return ::send(this->socketNum, buf.data, buf.length,0);
 }
 
+int SockBase::send(SockData sockData) {
+	return ::send(sockData.toBuffer())
+}
+
 int SockBase::recv(char * data, int &length) {
 	return ::recv(this->socketNum, data, length, 0);
 }
 
-int SockBase::recv(Buffer buf) {
-	
+Buffer SockBase::recv() {
+	Buffer retVal;
+	::recv(this->socketNum, retVal.data, retVal.length, 0);
+	return retVal;
 }
+
+//int SockBase::sendto(char* data, int length) {
+//
+//}
+//
+//int SockBase::sendto(Buffer buf) {
+//
+//}
+//
+//int SockBase::recvfrom(char* data, int length) {
+//
+//}
+//
+//Buffer SockBase::recvfrom() {
+//
+//}
+
 
 
 LANServer::LANServer(){
 
 }
 
-LANServer::LANServer(char* ip, int port) {
-
+LANServer::LANServer(char* ip, int port,int family) {
+	strcpy_s(this->ip, ip);
+	this->port = port;
+	this->family = family;
 }
 
 LANServer::~LANServer() {
@@ -81,9 +106,10 @@ LANClient::LANClient() {
 
 }
 
-LANClient::LANClient(char* ip, int port) {
+LANClient::LANClient(char* ip, int port,int family=AF_INET) {
 	strcpy_s(this->ip, ip);
 	this->port=port;
+	this->family = family;
 }
 
 LANClient::~LANClient() {
@@ -105,12 +131,12 @@ int LANClient::disconnect() {
 
 
 
-int LANClient::read() {
-
-	this->outBuffer.insert(this->outBuffer.end(),SockData))
+int LANClient::read(){ 
+	this->inBuffer.push_back(this->recv());
 }
 
-int LANClient::write() {
+int LANClient::write(const char* command) {
+	this->send(this->outBuffer.pop_front());
 }
 
 int LANClient::query() {
