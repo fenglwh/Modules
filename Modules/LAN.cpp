@@ -12,7 +12,7 @@ SockData SockData::parse(byte* data,int length) {
 	retVal.length |= ((data[7] << 8) & 0xFF00);
 	retVal.length |= ((data[8] << 16) & 0xFF0000);
 	retVal.length |= ((data[9] << 24) & 0xFF000000);
-	for (int i = 10; i < 10 + retVal.length; i++) {
+	for (unsigned int i = 10; i < 10 + retVal.length; i++) {
 		retVal.data[i - 10] = data[i];
 	}
 	return retVal;
@@ -30,21 +30,28 @@ Buffer SockData::load() {
 	retVal.data[7] = (byte)((0xff00 & this->length) >> 8);
 	retVal.data[8] = (byte)((0xff0000 & this->length) >> 16);
 	retVal.data[9] = (byte)((0xff000000 & this->length) >> 24);
-	for (int i = 10; i < 10 + this->length; i++) {
+	for (unsigned int i = 10; i < 10 + this->length; i++) {
 		retVal.data[i] = this->data[i - 10];
 	}
 	retVal.length = 10 + this->length;
 	return retVal;
 }
 
-int SockBase::send() {
-	;
+int SockBase::send(const char * data, int length) {
+	return ::send(this->socketNum, data, length,0);
 }
 
-int SockBase::recv() {
-
+int SockBase::send(Buffer buf) {
+	return ::send(this->socketNum, buf.data, buf.length,0);
 }
 
+int SockBase::recv(char * data, int &length) {
+	return ::recv(this->socketNum, data, length, 0);
+}
+
+int SockBase::recv(Buffer buf) {
+	
+}
 
 
 LANServer::LANServer(){
@@ -75,7 +82,7 @@ LANClient::LANClient() {
 }
 
 LANClient::LANClient(char* ip, int port) {
-	strcpy(this->ip, ip);
+	strcpy_s(this->ip, ip);
 	this->port=port;
 }
 
@@ -99,7 +106,8 @@ int LANClient::disconnect() {
 
 
 int LANClient::read() {
-	
+
+	this->outBuffer.insert(this->outBuffer.end(),SockData))
 }
 
 int LANClient::write() {
@@ -112,7 +120,7 @@ int LANClient::query() {
 sockaddr_in SockBase::makeAddr() {
 	sockaddr_in sock = sockaddr_in();
 	sock.sin_family= this->family;
-	sock.sin_addr.s_addr = inet_addr(this->ip);
+	inet_pton(AF_INET,this->ip,&sock.sin_addr.s_addr);
 	sock.sin_port = htons(this->port);
 	return sock;
 }

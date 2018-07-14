@@ -29,9 +29,9 @@ int GPIB::Open(char *lpsession) {
 int GPIB::Write(char *command) {
 	ViUInt32 iretcount = 0;
 	char pBuffer[16640] = { 0 };
-	strcpy(pBuffer, command);
+	strcpy_s(pBuffer, command);
 	if (pBuffer[strlen(pBuffer)] != '\n') {
-		strcat(pBuffer, "\n");
+		strcat_s(pBuffer, "\n");
 	}
 	return (VI_SUCCESS == viWrite(m_vistr, (ViBuf)pBuffer, (unsigned int)strlen(pBuffer), &iretcount));
 }

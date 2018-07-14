@@ -26,7 +26,7 @@ int Logging::setPath(char* path) {
 
 int Logging::getPath(char* path) {
 	if (this->path != nullptr) {
-		strcpy(path, this->path);
+		strcpy_s(path, strlen(path),this->path);
 		return 0;
 	}
 	else {
@@ -45,8 +45,9 @@ LOG_LEVEL Logging::getDebugLevel() {
 
 template <class T>
 void Logging::log(T parameter){
-	ofstream os(this->path, ios::app);	
-	os << parameter << endl;
+	using namespace std;
+	ofstream ofs=ofstream(this->path, ios::app);	
+	ofs << parameter << endl;
 }
 template <class T>
 void Logging::info(T parameter) {
