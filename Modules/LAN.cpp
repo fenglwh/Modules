@@ -1,6 +1,41 @@
 #include "LAN.h"
 
-SockData SockData::load(byte* data,int length) {
+int SockData::loadThis(char* data,int length) {
+	int pos = 0;
+	this->type = (SOCK_MESSAGE_TYPE)(data[0] * 256 + data[1]);
+	this->id = data[2] & 0xFF;
+	this->id |= ((data[3] << 8) & 0xFF00);
+	this->id |= ((data[4] << 16) & 0xFF0000);
+	this->id |= ((data[5] << 24) & 0xFF000000);
+	this->length = data[6] & 0xFF;
+	this->length |= ((data[7] << 8) & 0xFF00);
+	this->length |= ((data[8] << 16) & 0xFF0000);
+	this->length |= ((data[9] << 24) & 0xFF000000);
+	for (unsigned int i = 10; i < 10 + this->length; i++) {
+		this->data[i - 10] = data[i];
+	}
+	return 1;
+}
+
+int SockData::loadThis(Buffer buf) {
+	int pos = 0;
+	this->type = (SOCK_MESSAGE_TYPE)(buf.data[0] * 256 + buf.data[1]);
+	this->id = buf.data[2] & 0xFF;
+	this->id |= ((buf.data[3] << 8) & 0xFF00);
+	this->id |= ((buf.data[4] << 16) & 0xFF0000);
+	this->id |= ((buf.data[5] << 24) & 0xFF000000);
+	this->length = buf.data[6] & 0xFF;
+	this->length |= ((buf.data[7] << 8) & 0xFF00);
+	this->length |= ((buf.data[8] << 16) & 0xFF0000);
+	this->length |= ((buf.data[9] << 24) & 0xFF000000);
+	for (unsigned int i = 10; i < 10 + this->length; i++) {
+		this->data[i - 10] = buf.data[i];
+	}
+	return 1;
+}
+
+
+SockData SockData::load(char* data,int length) {
 	SockData retVal;
 	int pos = 0;
 	retVal.type = (SOCK_MESSAGE_TYPE)(data[0] * 256 + data[1]);
@@ -20,16 +55,16 @@ SockData SockData::load(byte* data,int length) {
 
 Buffer SockData::toBuffer() {
 	Buffer retVal;
-	retVal.data[0] = (byte)(0xff & int(this->type));
-	retVal.data[1] = (byte)((0xff00 & int(this->type)) >> 8);
-	retVal.data[2] = (byte)(0xff & this->id);
-	retVal.data[3] = (byte)((0xff00 & this->id) >> 8);
-	retVal.data[4] = (byte)((0xff0000 & this->id) >> 16);
-	retVal.data[5] = (byte)((0xff000000 & this->id) >> 24);
-	retVal.data[6] = (byte)(0xff & this->length);
-	retVal.data[7] = (byte)((0xff00 & this->length) >> 8);
-	retVal.data[8] = (byte)((0xff0000 & this->length) >> 16);
-	retVal.data[9] = (byte)((0xff000000 & this->length) >> 24);
+	retVal.data[0] = (char)(0xff & int(this->type));
+	retVal.data[1] = (char)((0xff00 & int(this->type)) >> 8);
+	retVal.data[2] = (char)(0xff & this->id);
+	retVal.data[3] = (char)((0xff00 & this->id) >> 8);
+	retVal.data[4] = (char)((0xff0000 & this->id) >> 16);
+	retVal.data[5] = (char)((0xff000000 & this->id) >> 24);
+	retVal.data[6] = (char)(0xff & this->length);
+	retVal.data[7] = (char)((0xff00 & this->length) >> 8);
+	retVal.data[8] = (char)((0xff0000 & this->length) >> 16);
+	retVal.data[9] = (char)((0xff000000 & this->length) >> 24);
 	for (unsigned int i = 10; i < 10 + this->length; i++) {
 		retVal.data[i] = this->data[i - 10];
 	}
@@ -46,7 +81,7 @@ int SockBase::send(Buffer buf) {
 }
 
 int SockBase::send(SockData sockData) {
-	return ::send(sockData.toBuffer())
+	return this->send(sockData.toBuffer());
 }
 
 int SockBase::recv(char * data, int &length) {
@@ -128,19 +163,24 @@ int LANClient::disconnect() {
 	return ::closesocket(this->socketNum);
 }
 
+int LANClient::bufferRead() {
+
+}
+
+int LANClient::bufferWrite() {
+	
+}
 
 
-
-int LANClient::read(){ 
-	this->inBuffer.push_back(this->recv());
+int LANClient::read(unsigned int id){ 
+	
 }
 
 int LANClient::write(const char* command) {
-	this->send(this->outBuffer.pop_front());
+	
 }
 
-int LANClient::query() {
-
+int LANClient::query(const char* command) {
 }
 
 sockaddr_in SockBase::makeAddr() {

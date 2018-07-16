@@ -5,6 +5,7 @@
 #pragma comment(lib,"ws2_32.lib")  
 //#include<sys/socket.h>
 #include "list"
+#include "map"
 
 enum SOCK_MESSAGE_TYPE {
 	aa = 1,
@@ -22,9 +23,10 @@ struct SockData{
 	SOCK_MESSAGE_TYPE type;
 	unsigned int id;
 	unsigned int length;
-	byte data[102400];
-
-	SockData load(byte*,int length=0);
+	char data[102400];
+	int loadThis(char*, int length = 0);
+	int loadThis(Buffer);
+	SockData load(char*,int length=0);
 	Buffer toBuffer();
 };
 
@@ -49,7 +51,7 @@ public:
 
 class LANClient:SockBase {
 public:
-	std::list<Buffer> inBuffer;
+	std::map<int,Buffer> inBuffer;
 	std::list<Buffer> outBuffer;
 	std::list<void*> addressToFree;
 
@@ -59,9 +61,13 @@ public:
 
 	int connect();
 	int disconnect();
-	int read();
+	int bufferRead();
+	int bufferWrite();
+
+
+	int read(unsigned int id=0);
 	int write(const char* command);
-	int query();
+	int query(const char* command);
 	int heartBeat();
 
 
