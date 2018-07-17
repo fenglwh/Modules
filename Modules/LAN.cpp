@@ -116,7 +116,7 @@ LANServer::LANServer(){
 
 }
 
-LANServer::LANServer(char* ip, int port,int family) {
+LANServer::LANServer(const char* ip, int port,int family) {
 	strcpy_s(this->ip, ip);
 	this->port = port;
 	this->family = family;
@@ -141,7 +141,7 @@ LANClient::LANClient() {
 
 }
 
-LANClient::LANClient(char* ip, int port,int family=AF_INET) {
+LANClient::LANClient(const char* ip, int port,int family) {
 	strcpy_s(this->ip, ip);
 	this->port=port;
 	this->family = family;
@@ -151,7 +151,9 @@ LANClient::~LANClient() {
 	for (void* add : this->addressToFree) {
 		delete add;
 	}
-
+	if (this->connected==1) {
+		this->disconnect();
+	}
 }
 
 int LANClient::connect() {
@@ -162,12 +164,20 @@ int LANClient::connect() {
 		return 0;
 	}
 	this->socketNum = socket(AF_INET, SOCK_STREAM, 0);
-	return ::connect(this->socketNum,(sockaddr *)&this->makeAddr(),sizeof(sockaddr));
+	int ret_val= ::connect(this->socketNum,(sockaddr *)&this->makeAddr(),sizeof(sockaddr));
+	if (ret_val == 0) {
+		this->connected = 1;
+	}
+	this->workloopThread = std::thread(this->workLoop);
+	this->workloopThread.detach();
+	return ret_val;
 }
 
 int LANClient::disconnect() {
 	int retVal= ::closesocket(this->socketNum);
 	WSACleanup();
+	this->connected = 0;
+	this->workloopThread.join();
 	return retVal;
 }
 
@@ -178,12 +188,14 @@ int LANClient::bufferRead() {
 	buffertmp=this->recv();
 	socktmp.loadThis(buffertmp);
 	this->inBuffer[socktmp.id] = buffertmp;
+	return 1;
 }
 
 int LANClient::bufferWrite() {
 	// buffer send to peer
 	this->send(this->outBuffer.front());
 	this->outBuffer.pop_front();
+	return 1;
 }
 
 
@@ -202,13 +214,53 @@ int LANClient::write(const char* command) {
 	socktmp.id = this->messageId;
 	this->messageId++;
 	socktmp.length = strlen(command);
-	strcpy(socktmp.data, command);
+	strcpy_s(socktmp.data, command);
+	this->outBuffer.push_back(socktmp.toBuffer());
+	return socktmp.id;
+}
+int LANClient::write(SockData socktmp) {
 	this->outBuffer.push_back(socktmp.toBuffer());
 	return socktmp.id;
 }
 
 SockData LANClient::query(const char* command) {
 	return this->read(this->write(command));
+}
+
+int LANClient::workLoop() {
+	fd_set rfds, wfds;
+	timeval timeout = {0,50};
+	this->workLoopRuning = 1;
+	while (this->connected==1) {
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
+		FD_SET(this->socketNum, &rfds);
+		FD_SET(this->socketNum, &wfds);
+		switch (select(0, &rfds, &wfds, NULL, &timeout)) {
+		case 0:
+			continue;
+		case -1:
+			this->workLoopRuning = 0;
+			return 255;
+		default:
+			if (FD_ISSET(this->socketNum, &rfds)) {
+				this->bufferRead();
+			}
+			if (FD_ISSET(this->socketNum, &wfds) && this->outBuffer.size()>0) {
+				this->bufferWrite();
+			}
+		}
+	}
+	this->workLoopRuning = 0;
+	return 0;
+}
+
+int LANClient::heartBeat() {
+	SockData socktmp;
+	socktmp.type = SOCK_MESSAGE_TYPE::heartBeat;
+	socktmp.id = 0;
+	socktmp.length = 0;
+	return this->write(socktmp);
 }
 
 sockaddr_in SockBase::makeAddr() {

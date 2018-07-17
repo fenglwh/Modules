@@ -6,10 +6,11 @@
 //#include<sys/socket.h>
 #include "list"
 #include "map"
-
+#include "thread"
 enum SOCK_MESSAGE_TYPE {
 	init = 0,
 
+	heartBeat=254,
 	textMessage=255,
 };
 
@@ -51,37 +52,44 @@ public:
 	sockaddr_in makeAddr();
 };
 
-class LANClient:SockBase {
+class LANClient:public SockBase {
+	
 public:
 	std::map<int,Buffer> inBuffer;
 	std::list<Buffer> outBuffer;
 	std::list<void*> addressToFree;
 	int messageId = 1;
+	int connected = 0;
+	std::thread workloopThread;
+	int workLoopRuning = 0;
 
 	LANClient();
-	LANClient(char* ip, int port,int family=AF_INET);
+	LANClient(const char* ip, int port,int family=AF_INET);
 	~LANClient();
 
 	int connect();
 	int disconnect();
 	int bufferRead();
 	int bufferWrite();
-
+	
 
 	SockData read(unsigned int id=0);
 	int write(const char* command);
+	int write(SockData);
 	SockData query(const char* command);
+	int workLoop();
 	int heartBeat();
 
 
 };
 
-class LANServer:SockBase {
+class LANServer:public SockBase {
+public:
 	std::list<LANClient> clients;
 	std::list<void*> addressToFree;
 
 	LANServer();
-	LANServer(char* ip, int port,int family);
+	LANServer(const char* ip, int port,int family);
 	~LANServer();
 
 	int enterMessageLoop();

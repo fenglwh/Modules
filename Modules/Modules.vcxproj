@@ -136,6 +136,7 @@
     <ClCompile Include="GPIB.cpp" />
     <ClCompile Include="LAN.cpp" />
     <ClCompile Include="Logging.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="remote.cpp" />
     <ClCompile Include="winReg.cpp" />
   </ItemGroup>
