@@ -111,6 +111,14 @@ Buffer SockBase::recv() {
 	return socktmp.toBuffer();
 }
 
+sockaddr_in SockBase::makeAddr() {
+	sockaddr_in sock = sockaddr_in();
+	sock.sin_family = this->family;
+	inet_pton(AF_INET, this->ip, &sock.sin_addr.s_addr);
+	sock.sin_port = htons(this->port);
+	return sock;
+}
+
 //int SockBase::sendto(char* data, int length) {
 //
 //}
@@ -126,32 +134,6 @@ Buffer SockBase::recv() {
 //Buffer SockBase::recvfrom() {
 //
 //}
-
-
-
-LANServer::LANServer(){
-
-}
-
-LANServer::LANServer(const char* ip, int port,int family) {
-	strcpy_s(this->ip, ip);
-	this->port = port;
-	this->family = family;
-}
-
-LANServer::~LANServer() {
-	for (void* add : this->addressToFree) {
-		delete add;
-	}
-}
-
-int LANServer::enterMessageLoop() {
-	return 1;
-}
-
-int LANServer::getClientNum() {
-	return 0;
-}
 
 
 LANClient::LANClient() {
@@ -205,11 +187,12 @@ int LANClient::bufferRead() {
 	buffertmp=this->recv();
 	socktmp.loadThis(buffertmp);
 	this->inBuffer[socktmp.id] = buffertmp;
-	std::cout << "message:";
-	for (int i=0; i < buffertmp.length; i++) {
-		std::cout << (unsigned int)(unsigned char)(buffertmp.data[i])<<" ";
-	}
-	std::cout << std::endl;
+	//this part is use to test the read
+	//std::cout << "message:";
+	//for (int i=0; i < buffertmp.length; i++) {
+	//	std::cout << (unsigned int)(unsigned char)(buffertmp.data[i])<<" ";
+	//}
+	//std::cout << std::endl;
 	return 1;
 }
 
@@ -285,13 +268,38 @@ int LANClient::heartBeat() {
 	return this->write(socktmp);
 }
 
-sockaddr_in SockBase::makeAddr() {
-	sockaddr_in sock = sockaddr_in();
-	sock.sin_family= this->family;
-	inet_pton(AF_INET,this->ip,&sock.sin_addr.s_addr);
-	sock.sin_port = htons(this->port);
-	return sock;
+int LANClient::clearBuffer() {
+	this->inBuffer.clear();
+	this->outBuffer.clear();
 }
+
+
+
+
+LANServer::LANServer() {
+
+}
+
+LANServer::LANServer(const char* ip, int port, int family) {
+	strcpy_s(this->ip, ip);
+	this->port = port;
+	this->family = family;
+}
+
+LANServer::~LANServer() {
+	for (void* add : this->addressToFree) {
+		delete add;
+	}
+}
+
+int LANServer::enterMessageLoop() {
+	return 1;
+}
+
+int LANServer::getClientNum() {
+	return 0;
+}
+
 
 
 
