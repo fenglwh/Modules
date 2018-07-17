@@ -155,12 +155,20 @@ LANClient::~LANClient() {
 }
 
 int LANClient::connect() {
+	WORD sockVersion = MAKEWORD(2, 2);
+	WSADATA wsaData;
+	if (WSAStartup(sockVersion, &wsaData) != 0)
+	{
+		return 0;
+	}
 	this->socketNum = socket(AF_INET, SOCK_STREAM, 0);
 	return ::connect(this->socketNum,(sockaddr *)&this->makeAddr(),sizeof(sockaddr));
 }
 
 int LANClient::disconnect() {
-	return ::closesocket(this->socketNum);
+	int retVal= ::closesocket(this->socketNum);
+	WSACleanup();
+	return retVal;
 }
 
 int LANClient::bufferRead() {
@@ -180,16 +188,27 @@ int LANClient::bufferWrite() {
 
 
 SockData LANClient::read(unsigned int id){ 
+	SockData retVal = {SOCK_MESSAGE_TYPE::init,0,0,""};
 	if (this->inBuffer.count(id) > 0) {
-		SockData ret Val
+		retVal.loadThis(this->inBuffer[id]);
+		this->inBuffer.erase(id);
 	}
+	return retVal;
 }
 
 int LANClient::write(const char* command) {
-	
+	SockData socktmp;
+	socktmp.type = SOCK_MESSAGE_TYPE::textMessage;
+	socktmp.id = this->messageId;
+	this->messageId++;
+	socktmp.length = strlen(command);
+	strcpy(socktmp.data, command);
+	this->outBuffer.push_back(socktmp.toBuffer());
+	return socktmp.id;
 }
 
-int LANClient::query(const char* command) {
+SockData LANClient::query(const char* command) {
+	return this->read(this->write(command));
 }
 
 sockaddr_in SockBase::makeAddr() {

@@ -9,6 +9,8 @@
 
 enum SOCK_MESSAGE_TYPE {
 	init = 0,
+
+	textMessage=255,
 };
 
 
@@ -54,7 +56,7 @@ public:
 	std::map<int,Buffer> inBuffer;
 	std::list<Buffer> outBuffer;
 	std::list<void*> addressToFree;
-	int id = 1;
+	int messageId = 1;
 
 	LANClient();
 	LANClient(char* ip, int port,int family=AF_INET);
@@ -68,7 +70,7 @@ public:
 
 	SockData read(unsigned int id=0);
 	int write(const char* command);
-	int query(const char* command);
+	SockData query(const char* command);
 	int heartBeat();
 
 
