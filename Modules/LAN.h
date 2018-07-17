@@ -80,8 +80,7 @@ public:
 	SockData query(const char* command);
 	int workLoop();
 	int heartBeat();
-
-
+	int clearBuffer();
 };
 
 class LANServer:public SockBase {
