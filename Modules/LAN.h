@@ -31,6 +31,7 @@ struct SockData{
 	int loadThis(Buffer);
 	SockData load(char*,int length=0);
 	Buffer toBuffer();
+	int bufferLength();
 };
 
 class SockBase {
@@ -43,7 +44,7 @@ public:
 	int send(const char * data, int length);
 	int send(Buffer);
 	int send(SockData);
-	int recv(char * data, int &length);
+	int recv(char * data, int length);
 	Buffer recv();
 	//int sendto(char* data,int length);
 	//int sendto(Buffer buf);
