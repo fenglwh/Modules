@@ -8,7 +8,7 @@
 #include "map"
 
 enum SOCK_MESSAGE_TYPE {
-	aa = 1,
+	init = 0,
 };
 
 
@@ -33,7 +33,7 @@ struct SockData{
 class SockBase {
 public:
 	SOCKET socketNum;
-	int timeout;
+	int timeout=1200000;//ms
 	char ip[256];
 	short port=0;
 	int family = AF_INET;
@@ -54,6 +54,7 @@ public:
 	std::map<int,Buffer> inBuffer;
 	std::list<Buffer> outBuffer;
 	std::list<void*> addressToFree;
+	int id = 1;
 
 	LANClient();
 	LANClient(char* ip, int port,int family=AF_INET);
@@ -65,7 +66,7 @@ public:
 	int bufferWrite();
 
 
-	int read(unsigned int id=0);
+	SockData read(unsigned int id=0);
 	int write(const char* command);
 	int query(const char* command);
 	int heartBeat();

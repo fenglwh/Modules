@@ -164,16 +164,25 @@ int LANClient::disconnect() {
 }
 
 int LANClient::bufferRead() {
-
+	// recv to buffer
+	Buffer buffertmp;
+	SockData socktmp;
+	buffertmp=this->recv();
+	socktmp.loadThis(buffertmp);
+	this->inBuffer[socktmp.id] = buffertmp;
 }
 
 int LANClient::bufferWrite() {
-	
+	// buffer send to peer
+	this->send(this->outBuffer.front());
+	this->outBuffer.pop_front();
 }
 
 
-int LANClient::read(unsigned int id){ 
-	
+SockData LANClient::read(unsigned int id){ 
+	if (this->inBuffer.count(id) > 0) {
+		SockData ret Val
+	}
 }
 
 int LANClient::write(const char* command) {
