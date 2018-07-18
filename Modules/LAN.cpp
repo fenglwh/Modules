@@ -140,6 +140,30 @@ int SockBase::getPort() {
 	return ntohs(this->sockEntity.sin_port);
 }
 
+int SockBase::getFamily() {
+	return this->sockEntity.sin_family;
+}
+
+int SockBase::setIP(const char* ip) {
+	this->sockEntity.sin_addr.s_addr = inet_addr(ip);
+	return 0;
+}
+
+int SockBase::setIP(std::string ip) {
+	this->sockEntity.sin_addr.s_addr = inet_addr(ip.c_str());
+	return 0;
+}
+
+int SockBase::setPort(int port) {
+	this->sockEntity.sin_port = htons(port);
+	return 0;
+}
+
+int SockBase::setFamily(int family) {
+	this->sockEntity.sin_family = family;
+	return 0;
+}
+
 LANClient::LANClient() {
 
 }
@@ -300,11 +324,11 @@ LANServer::~LANServer() {
 int LANServer::enterMessageLoop() {
 
 	fd_set rfds, wfds;
-	fd_set rfds, wfds;
+	int intTmp;
 	timeval timeout = { 0,50 };
-	LANClient client();
+	LANClient client=LANClient();
 	::bind(this->socketNum, (sockaddr*)&this->sockEntity, sizeof(sockaddr_in));
-	//::accept(this->socketNum, sockaddr_in);
+	::accept(this->socketNum, (sockaddr*)&(client.sockEntity),&intTmp);
 	while (1) {
 	
 	}

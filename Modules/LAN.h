@@ -7,6 +7,7 @@
 #include "list"
 #include "map"
 #include "thread"
+#include "string"
 enum SOCK_MESSAGE_TYPE {
 	init = 0,
 
@@ -39,9 +40,7 @@ class SockBase {
 public:
 	SOCKET socketNum;
 	int timeout=1200000;//ms
-	char ip[256];
-	short port=0;
-	int family = AF_INET;
+	sockaddr_in sockEntity;
 	int send(const char * data, int length);
 	int send(Buffer);
 	int send(SockData);
@@ -51,7 +50,14 @@ public:
 	//int sendto(Buffer buf);
 	//int recvfrom(char*data ,int length);
 	//Buffer recvfrom();
-	sockaddr_in makeAddr();
+	int getIP(char *);
+	std::string getIP();
+	int getPort();
+	int getFamily();
+	int setIP(const char*);
+	int setIP(std::string);
+	int setPort(int);
+	int setFamily(int);
 };
 
 class LANClient:public SockBase {
