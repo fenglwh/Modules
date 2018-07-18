@@ -6,10 +6,12 @@ void sleep_unix(unsigned const int millisecond) {
 	::select(0, NULL, NULL, NULL, &timeout);
 	return;
 }
+#if defined(_WIN32)
 void sleep_windows(unsigned const int millisecond) {
 	timeBeginPeriod(1);
 	Sleep(millisecond);
 	DWORD dwTime = ::timeGetTime();
 	timeEndPeriod(1);
 }
+#endif
 

@@ -1,13 +1,13 @@
 #pragma once
-#include <winsock2.h>  
-#include <WS2tcpip.h>
-#pragma comment(lib,"ws2_32.lib")  
-
 #if defined(__linux__) || defined(__unix__)
 #define sleep sleep_unix
+#include "sys/socket.h"
 #elif defined(_WIN32)
 #define sleep sleep_windows
+#include <winsock2.h>  
+#include <WS2tcpip.h>
 #pragma comment(lib,"Winmm.lib")
+#pragma comment(lib,"ws2_32.lib")  
 #endif // 
 #include "stdarg.h"
 #include "time.h"
