@@ -129,6 +129,7 @@
     <ClInclude Include="sockets.h" />
     <ClInclude Include="sys.h" />
     <ClInclude Include="systemTray.h" />
+    <ClInclude Include="timmer.h" />
     <ClInclude Include="WIFI.h" />
     <ClInclude Include="winReg.h" />
   </ItemGroup>
@@ -138,6 +139,8 @@
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="remote.cpp" />
+    <ClCompile Include="serial.cpp" />
+    <ClCompile Include="timmer.cpp" />
     <ClCompile Include="winReg.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

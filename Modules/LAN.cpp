@@ -271,6 +271,7 @@ int LANClient::heartBeat() {
 int LANClient::clearBuffer() {
 	this->inBuffer.clear();
 	this->outBuffer.clear();
+	return 1;
 }
 
 
@@ -293,6 +294,8 @@ LANServer::~LANServer() {
 }
 
 int LANServer::enterMessageLoop() {
+	fd_set rfds, wfds;
+	
 	return 1;
 }
 

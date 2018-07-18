@@ -51,6 +51,9 @@
     <ClInclude Include="remote.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="timmer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="winReg.cpp">
@@ -69,6 +72,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="timmer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="serial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
