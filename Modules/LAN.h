@@ -12,6 +12,7 @@ enum SOCK_MESSAGE_TYPE {
 
 	heartBeat=254,
 	textMessage=255,
+	UDP_ACK=256,
 };
 
 
@@ -94,7 +95,7 @@ public:
 
 	int enterMessageLoop();
 	int getClientNum();
-	int onMessage0();
+	int onMessage(SockData data);
 };
 
 

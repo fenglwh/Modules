@@ -111,13 +111,6 @@ Buffer SockBase::recv() {
 	return socktmp.toBuffer();
 }
 
-sockaddr_in SockBase::makeAddr() {
-	sockaddr_in sock = sockaddr_in();
-	sock.sin_family = this->family;
-	inet_pton(AF_INET, this->ip, &sock.sin_addr.s_addr);
-	sock.sin_port = htons(this->port);
-	return sock;
-}
 
 //int SockBase::sendto(char* data, int length) {
 //
@@ -135,15 +128,26 @@ sockaddr_in SockBase::makeAddr() {
 //
 //}
 
+int SockBase::getIP(char * IP) {
+	return strcpy_s(IP, strlen(inet_ntoa(this->sockEntity.sin_addr)),inet_ntoa(this->sockEntity.sin_addr));
+}
+
+std::string SockBase::getIP() {
+	return std::string();
+}
+
+int SockBase::getPort() {
+	return ntohs(this->sockEntity.sin_port);
+}
 
 LANClient::LANClient() {
 
 }
 
 LANClient::LANClient(const char* ip, int port,int family) {
-	strcpy_s(this->ip, ip);
-	this->port=port;
-	this->family = family;
+	this->sockEntity.sin_addr.s_addr = inet_addr(ip);
+	this->sockEntity.sin_port = htons(port);
+	this->sockEntity.sin_family = family;
 }
 
 LANClient::~LANClient() {
@@ -163,7 +167,7 @@ int LANClient::connect() {
 		return 0;
 	}
 	this->socketNum = socket(AF_INET, SOCK_STREAM, 0);
-	int ret_val= ::connect(this->socketNum,(sockaddr *)&this->makeAddr(),sizeof(sockaddr));
+	int ret_val= ::connect(this->socketNum,(sockaddr*)&this->sockEntity,sizeof(sockaddr_in));
 	if (ret_val == 0) {
 		this->connected = 1;
 	}
@@ -282,9 +286,9 @@ LANServer::LANServer() {
 }
 
 LANServer::LANServer(const char* ip, int port, int family) {
-	strcpy_s(this->ip, ip);
-	this->port = port;
-	this->family = family;
+	this->sockEntity.sin_addr.s_addr = inet_addr(ip);
+	this->sockEntity.sin_port = htons(port);
+	this->sockEntity.sin_family = family;
 }
 
 LANServer::~LANServer() {
@@ -294,7 +298,16 @@ LANServer::~LANServer() {
 }
 
 int LANServer::enterMessageLoop() {
+
 	fd_set rfds, wfds;
+	fd_set rfds, wfds;
+	timeval timeout = { 0,50 };
+	LANClient client();
+	::bind(this->socketNum, (sockaddr*)&this->sockEntity, sizeof(sockaddr_in));
+	//::accept(this->socketNum, sockaddr_in);
+	while (1) {
+	
+	}
 	
 	return 1;
 }
@@ -303,6 +316,9 @@ int LANServer::getClientNum() {
 	return 0;
 }
 
+int LANServer::onMessage(SockData data) {
+	
+}
 
 
 
