@@ -129,7 +129,8 @@ Buffer SockBase::recv() {
 //}
 
 int SockBase::getIP(char * IP) {
-	return strcpy_s(IP, strlen(inet_ntoa(this->sockEntity.sin_addr)),inet_ntoa(this->sockEntity.sin_addr));
+	inet_ntop(AF_INET,(void*)&this->sockEntity.sin_addr, IP,16);
+	return 0;
 }
 
 std::string SockBase::getIP() {
@@ -145,12 +146,12 @@ int SockBase::getFamily() {
 }
 
 int SockBase::setIP(const char* ip) {
-	this->sockEntity.sin_addr.s_addr = inet_addr(ip);
+	inet_pton(AF_INET, ip, (void*)&this->sockEntity.sin_addr);
 	return 0;
 }
 
 int SockBase::setIP(std::string ip) {
-	this->sockEntity.sin_addr.s_addr = inet_addr(ip.c_str());
+	inet_pton(AF_INET, ip.c_str(), (void*)&this->sockEntity.sin_addr);
 	return 0;
 }
 
@@ -168,8 +169,13 @@ LANClient::LANClient() {
 
 }
 
+LANClient::LANClient(const LANClient& other) {
+	this->sockEntity = other.sockEntity;
+	this->socketNum = other.socketNum;
+}
+
 LANClient::LANClient(const char* ip, int port,int family) {
-	this->sockEntity.sin_addr.s_addr = inet_addr(ip);
+	inet_pton(AF_INET, ip, (void*)&this->sockEntity.sin_addr);
 	this->sockEntity.sin_port = htons(port);
 	this->sockEntity.sin_family = family;
 }
@@ -311,6 +317,7 @@ LANServer::LANServer() {
 
 LANServer::LANServer(const char* ip, int port, int family) {
 	this->sockEntity.sin_addr.s_addr = inet_addr(ip);
+	inet_pton(AF_INET, ip, (void*)&this->sockEntity.sin_addr);
 	this->sockEntity.sin_port = htons(port);
 	this->sockEntity.sin_family = family;
 }
@@ -324,15 +331,66 @@ LANServer::~LANServer() {
 int LANServer::enterMessageLoop() {
 
 	fd_set rfds, wfds;
-	int intTmp;
+	DWORD d;
+	Buffer btmp;
+	int i, intTmp;
 	timeval timeout = { 0,50 };
 	LANClient client=LANClient();
-	::bind(this->socketNum, (sockaddr*)&this->sockEntity, sizeof(sockaddr_in));
-	::accept(this->socketNum, (sockaddr*)&(client.sockEntity),&intTmp);
-	while (1) {
-	
+	WORD sockVersion = MAKEWORD(2, 2);
+	WSADATA wsaData;
+	if (WSAStartup(sockVersion, &wsaData) != 0)
+	{
+		return 0;
 	}
-	
+
+	this->socketNum = socket(AF_INET, SOCK_STREAM, 0);
+	::bind(this->socketNum, (sockaddr*)&this->sockEntity, sizeof(sockaddr_in));
+	::listen(this->socketNum, 5);
+	while (1) {
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
+		FD_SET(this->socketNum, &rfds);
+		FD_SET(this->socketNum, &wfds);
+		if (this->connected) {
+			FD_SET(client.socketNum, &rfds);
+		}
+		if (this->connected) {
+			FD_SET(client.socketNum, &wfds);
+		}
+		switch (select(0, &rfds, &wfds, NULL, &timeout)) {
+		case 0:
+			continue;
+		case -1:
+			d = GetLastError();
+			this->workLoopRuning = 0;
+			return 255;
+		default:
+			if (FD_ISSET(this->socketNum, &rfds)) {
+				if (this->connected != 1) {
+					client.socketNum = ::accept(this->socketNum, (sockaddr*)&(client.sockEntity), &intTmp);
+					this->connected = 1;
+				}
+			}
+			if (FD_ISSET(client.socketNum, &rfds)) {
+				btmp = this->recv();
+				if (btmp.length == 0) {
+					this->connected = 0;
+					continue;
+				}
+				for (i = 0; i < btmp.length; i++) {
+					this->inBuffer[i] = btmp.data[i];
+				}
+				onMessage(SockData().load(this->inBuffer, this->inBufferLength));
+			}
+			if (FD_ISSET(client.socketNum, &wfds) && strlen(this->outBuffer) > 0) {
+				this->send(outBuffer, outBufferLength);
+			}
+		}
+
+	}
+
+
+	WSACleanup();
 	return 1;
 }
 
@@ -341,7 +399,10 @@ int LANServer::getClientNum() {
 }
 
 int LANServer::onMessage(SockData data) {
-	
+	std::cout<< data.type<< std::endl;
+	std::cout<< data.data<< std::endl;
+	std::cout<< data.id<< std::endl;
+	return 1;
 }
 
 

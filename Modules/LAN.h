@@ -72,6 +72,7 @@ public:
 	int workLoopRuning = 0;
 
 	LANClient();
+	LANClient(const LANClient&);
 	LANClient(const char* ip, int port,int family=AF_INET);
 	~LANClient();
 
@@ -92,11 +93,15 @@ public:
 
 class LANServer:public SockBase {
 public:
-	std::list<LANClient> clients;
 	std::list<void*> addressToFree;
-
+	int workLoopRuning = 0;
+	char inBuffer[102400];
+	char outBuffer[102400];
+	int inBufferLength=0;
+	int outBufferLength = 0;
+	int connected=0;
 	LANServer();
-	LANServer(const char* ip, int port,int family);
+	LANServer(const char* ip, int port, int family = AF_INET);
 	~LANServer();
 
 	int enterMessageLoop();

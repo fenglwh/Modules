@@ -3,8 +3,7 @@
 #include "timmer.h"
 
 int main() {
-	std::cout << "started" << std::endl;
-	sleep(10000);
-	std::cout << "finished" << std::endl;
+	LANServer s("127.0.0.1",9433);
+	s.enterMessageLoop();
 	std::cin.get();
 }
