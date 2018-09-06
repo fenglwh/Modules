@@ -11,6 +11,7 @@
 enum SOCK_MESSAGE_TYPE {
 	init = 0,
 
+	DISCONNECT = 253,
 	heartBeat=254,
 	textMessage=255,
 	UDP_ACK=256,
@@ -18,7 +19,7 @@ enum SOCK_MESSAGE_TYPE {
 
 
 struct Buffer {
-	char data[102400]="";
+	char data[10240] = {};
 	int length=0;
 };
 
@@ -28,7 +29,7 @@ struct SockData{
 	SOCK_MESSAGE_TYPE type;
 	unsigned int id;
 	unsigned int length;
-	char data[102400];
+	char data[10240] = {};
 	int loadThis(char*, int length = 0);
 	int loadThis(Buffer);
 	SockData load(char*,int length=0);
@@ -45,7 +46,7 @@ public:
 	int send(Buffer);
 	int send(SockData);
 	int recv(char * data, int length);
-	Buffer recv();
+	SockData recv();
 	//int sendto(char* data,int length);
 	//int sendto(Buffer buf);
 	//int recvfrom(char*data ,int length);
@@ -95,8 +96,8 @@ class LANServer:public SockBase {
 public:
 	std::list<void*> addressToFree;
 	int workLoopRuning = 0;
-	char inBuffer[102400];
-	char outBuffer[102400];
+	char inBuffer[10240];
+	char outBuffer[10240];
 	int inBufferLength=0;
 	int outBufferLength = 0;
 	int connected=0;

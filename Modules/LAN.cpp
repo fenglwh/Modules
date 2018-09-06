@@ -54,7 +54,7 @@ SockData SockData::load(char* data,int length) {
 }
 
 Buffer SockData::toBuffer() {
-	Buffer retVal;
+	Buffer retVal = {};
 	retVal.data[0] = (char)(0xff & int(this->type));
 	retVal.data[1] = (char)((0xff00 & int(this->type)) >> 8);
 	retVal.data[2] = (char)(0xff & this->id);
@@ -92,23 +92,30 @@ int SockBase::recv(char * data, int length) {
 	return ::recv(this->socketNum, data, length, 0);
 }
 
-Buffer SockBase::recv() {
-	SockData socktmp;
-	char data[102400] = {};
-	::recv(this->socketNum, data, 10, 0);
-	socktmp.type = (SOCK_MESSAGE_TYPE)((unsigned char)data[1] * 256 + (unsigned char)data[0]);
-	socktmp.id = data[2] & 0xFF;
-	socktmp.id |= ((data[3] << 8) & 0xFF00);
-	socktmp.id |= ((data[4] << 16) & 0xFF0000);
-	socktmp.id |= ((data[5] << 24) & 0xFF000000);
-	socktmp.length = data[6] & 0xFF;
-	socktmp.length |= ((data[7] << 8) & 0xFF00);
-	socktmp.length |= ((data[8] << 16) & 0xFF0000);
-	socktmp.length |= ((data[9] << 24) & 0xFF000000);
-	for (unsigned int i = 10; i < 10 + socktmp.length; i++) {
-		socktmp.data[i - 10] = data[i];
+SockData SockBase::recv() {
+	SockData socktmp = {};
+	Buffer buf={};
+	char data[10240] = {};
+	int ret_val=::recv(this->socketNum, data, 10240, 0);
+	if (ret_val == 0) {
+		socktmp.type = SOCK_MESSAGE_TYPE::DISCONNECT;
+		std::cout << "disconnect!"<<ret_val << std::endl;
 	}
-	return socktmp.toBuffer();
+	else {
+		socktmp.type = (SOCK_MESSAGE_TYPE)((unsigned char)data[1] * 256 + (unsigned char)data[0]);
+		socktmp.id = data[2] & 0xFF;
+		socktmp.id |= ((data[3] << 8) & 0xFF00);
+		socktmp.id |= ((data[4] << 16) & 0xFF0000);
+		socktmp.id |= ((data[5] << 24) & 0xFF000000);
+		socktmp.length = data[6] & 0xFF;
+		socktmp.length |= ((data[7] << 8) & 0xFF00);
+		socktmp.length |= ((data[8] << 16) & 0xFF0000);
+		socktmp.length |= ((data[9] << 24) & 0xFF000000);
+		for (unsigned int i = 10; i < 10 + socktmp.length; i++) {
+			socktmp.data[i - 10] = data[i];
+		}
+	}
+	return socktmp;
 }
 
 
@@ -216,11 +223,9 @@ int LANClient::disconnect() {
 
 int LANClient::bufferRead() {
 	// recv to buffer
-	Buffer buffertmp;
 	SockData socktmp;
-	buffertmp=this->recv();
-	socktmp.loadThis(buffertmp);
-	this->inBuffer[socktmp.id] = buffertmp;
+	socktmp=this->recv();
+	this->inBuffer[socktmp.id] = socktmp.toBuffer();
 	//this part is use to test the read
 	//std::cout << "message:";
 	//for (int i=0; i < buffertmp.length; i++) {
@@ -332,8 +337,8 @@ int LANServer::enterMessageLoop() {
 
 	fd_set rfds, wfds;
 	DWORD d;
-	Buffer btmp;
-	int i, intTmp;
+	SockData sktmp;
+	int i, rv, intTmp = sizeof(sockaddr_in);
 	timeval timeout = { 0,50 };
 	LANClient client=LANClient();
 	WORD sockVersion = MAKEWORD(2, 2);
@@ -343,7 +348,7 @@ int LANServer::enterMessageLoop() {
 		return 0;
 	}
 
-	this->socketNum = socket(AF_INET, SOCK_STREAM, 0);
+	this->socketNum = socket(AF_INET, SOCK_STREAM, 6);
 	::bind(this->socketNum, (sockaddr*)&this->sockEntity, sizeof(sockaddr_in));
 	::listen(this->socketNum, 5);
 	while (1) {
@@ -363,26 +368,33 @@ int LANServer::enterMessageLoop() {
 		case -1:
 			d = GetLastError();
 			this->workLoopRuning = 0;
-			return 255;
+			return d;
 		default:
 			if (FD_ISSET(this->socketNum, &rfds)) {
 				if (this->connected != 1) {
+					intTmp = sizeof(sockaddr_in);
 					client.socketNum = ::accept(this->socketNum, (sockaddr*)&(client.sockEntity), &intTmp);
-					this->connected = 1;
+					if (client.socketNum != INVALID_SOCKET) {
+						std::cout << "connected" << std::endl;
+						this->connected = 1;
+					}
+					else {
+						std::cout << " invalid socket"<< rv << std::endl;
+					}
 				}
 			}
 			if (FD_ISSET(client.socketNum, &rfds)) {
-				btmp = this->recv();
-				if (btmp.length == 0) {
+				sktmp = client.recv();
+				if (sktmp.type== SOCK_MESSAGE_TYPE::DISCONNECT) {
+					::closesocket(client.socketNum);
 					this->connected = 0;
+
 					continue;
 				}
-				for (i = 0; i < btmp.length; i++) {
-					this->inBuffer[i] = btmp.data[i];
-				}
-				onMessage(SockData().load(this->inBuffer, this->inBufferLength));
+
+				onMessage(sktmp);
 			}
-			if (FD_ISSET(client.socketNum, &wfds) && strlen(this->outBuffer) > 0) {
+			if (FD_ISSET(client.socketNum, &wfds) && outBufferLength > 0) {
 				this->send(outBuffer, outBufferLength);
 			}
 		}
