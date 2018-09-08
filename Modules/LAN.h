@@ -10,7 +10,11 @@
 #include "string"
 enum SOCK_MESSAGE_TYPE {
 	init = 0,
-
+	READ=1,
+	WRITE=2,
+	QUERY=3,
+	READ_RESULT=4,
+	QUERY_RESPONSE=5,
 	DISCONNECT = 253,
 	heartBeat=254,
 	textMessage=255,
@@ -19,8 +23,10 @@ enum SOCK_MESSAGE_TYPE {
 
 
 struct Buffer {
-	char data[10240] = {};
+
+	char * data;
 	int length=0;
+	~Buffer();
 };
 
 
@@ -29,7 +35,7 @@ struct SockData{
 	SOCK_MESSAGE_TYPE type;
 	unsigned int id;
 	unsigned int length;
-	char data[10240] = {};
+	char * data;
 	int loadThis(char*, int length = 0);
 	int loadThis(Buffer);
 	SockData load(char*,int length=0);

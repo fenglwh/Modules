@@ -1,6 +1,10 @@
 #include "LAN.h"
 #include "iostream"
-int SockData::loadThis(char* data,int length) {
+
+Buffer::~Buffer(){
+	delete data;
+}
+int SockData::loadThis(char* data, int length) {
 	int pos = 0;
 	this->type = (SOCK_MESSAGE_TYPE)((unsigned char)data[1] * 256 + (unsigned char)data[0]);
 	this->id = data[2] & 0xFF;
@@ -244,7 +248,7 @@ int LANClient::bufferWrite() {
 
 
 SockData LANClient::read(unsigned int id){ 
-	SockData retVal = {SOCK_MESSAGE_TYPE::init,0,0,""};
+	SockData retVal = {};
 	if (this->inBuffer.count(id) > 0) {
 		retVal.loadThis(this->inBuffer[id]);
 		this->inBuffer.erase(id);
@@ -258,7 +262,7 @@ int LANClient::write(const char* command) {
 	socktmp.id = this->messageId;
 	this->messageId++;
 	socktmp.length = strlen(command);
-	strcpy_s(socktmp.data, command);
+	strcpy_s(socktmp.data, 10240,command);
 	this->outBuffer.push_back(socktmp.toBuffer());
 	return socktmp.id;
 }
