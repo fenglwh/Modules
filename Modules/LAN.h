@@ -23,7 +23,7 @@ enum SOCK_MESSAGE_TYPE {
 
 
 struct Buffer {
-
+	Buffer(int length=102400);
 	char * data;
 	int length=0;
 	~Buffer();
@@ -32,6 +32,7 @@ struct Buffer {
 
 struct SockData{
 	//big endian
+	SockData(int length=102400);
 	SOCK_MESSAGE_TYPE type;
 	unsigned int id;
 	unsigned int length;
@@ -102,10 +103,7 @@ class LANServer:public SockBase {
 public:
 	std::list<void*> addressToFree;
 	int workLoopRuning = 0;
-	char inBuffer[10240];
-	char outBuffer[10240];
-	int inBufferLength=0;
-	int outBufferLength = 0;
+	Buffer outBuffer = Buffer(102400);
 	int connected=0;
 	LANServer();
 	LANServer(const char* ip, int port, int family = AF_INET);

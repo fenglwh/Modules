@@ -1,9 +1,20 @@
 #include "LAN.h"
 #include "iostream"
 
+Buffer::Buffer(int length) {
+	this->data = new char[length];
+}
+
+
 Buffer::~Buffer(){
 	delete data;
 }
+
+SockData::SockData(int length) {
+	this->data = new char[length];
+}
+
+
 int SockData::loadThis(char* data, int length) {
 	int pos = 0;
 	this->type = (SOCK_MESSAGE_TYPE)((unsigned char)data[1] * 256 + (unsigned char)data[0]);
@@ -395,11 +406,10 @@ int LANServer::enterMessageLoop() {
 
 					continue;
 				}
-
 				onMessage(sktmp);
 			}
-			if (FD_ISSET(client.socketNum, &wfds) && outBufferLength > 0) {
-				this->send(outBuffer, outBufferLength);
+			if (FD_ISSET(client.socketNum, &wfds) && this->outBuffer.length > 0) {
+				this->send(outBuffer);
 			}
 		}
 
